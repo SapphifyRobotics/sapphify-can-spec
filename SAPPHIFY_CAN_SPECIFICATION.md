@@ -1,38 +1,38 @@
-# ROTEM series CAN protocol specification
+# SAPPHIFY CAN protocol specification
 
 **Status: DRAFT v0.9 — not frozen.**
 **Manufacturer ID pending assignment by FIRST. Beta builds use the "Team Use" manufacturer ID 8.**
 
 Document owner: SAPPHIFY LLC. Licence: CC BY 4.0. Implementations: MIT.
 
-This document is normative for **every device in the ROTEM series**, not for one product.
+This document is normative for **every SAPPHIFY FRC CAN device**, not for one product.
 Firmware, the WPILib vendor library, the host tooling and the published test vectors all derive
 from it. Version 1.0 is not cut until the manufacturer ID is assigned and the shipped firmware
 matches this document exactly.
 
 ---
 
-## 0. The series
+## 0. The device family
 
-ROTEM is a family of FRC CAN devices from SAPPHIFY sharing one manufacturer ID, one protocol,
-one vendor library, one configuration tool and one log format. A team that learns one ROTEM
-device has learned all of them.
+SAPPHIFY FRC devices share one manufacturer ID, one protocol, one vendor library
+(`SapphifyLib`), one configuration tool and one log format. A team that learns one of them has
+learned all of them.
 
 | Device | FRC device type | Status | Hardware |
 |---|---|---|---|
-| ROTEM AHRS — CAN FD attitude and heading reference | 4 (Gyro Sensor) | routed rev B, first article | ICM-45686 + MMC5983MA + STM32U575 |
-| ROTEM absolute encoder | 7 (Encoder) | in design | MT6826S |
-| ROTEM USB-CAN FD bridge | 10 (Miscellaneous) | in design | — |
+| **ROTEM** — CAN FD attitude and heading reference | 4 (Gyro Sensor) | routed rev B, first article | ICM-45686 + MMC5983MA + STM32U575 |
+| absolute encoder (unnamed) | 7 (Encoder) | in design | MT6826S |
+| USB-CAN FD bridge (unnamed) | 10 (Miscellaneous) | in design | — |
 
 **This is the reason the series matters technically, not just commercially:**
 
 - **One manufacturer ID** is requested from FIRST once and covers the whole family. Device Type
   and Device Number separate the products inside it. Requesting an ID per product would be wrong
   and would be refused.
-- **One vendordep.** `ROTEMLib` exposes every ROTEM device. A team adds one library entry and
-  gets the encoder for free when it buys one. This is what Phoenix and ReduxLib do, and a
+- **One vendordep.** `SapphifyLib` exposes every device. A team adds one library entry and gets
+  the encoder for free when it buys one. This is what Phoenix and ReduxLib do, and a
   library-per-product would be a strategic error we cannot undo after publication.
-- **One configuration tool** discovers, identifies, calibrates and updates any ROTEM device on
+- **One configuration tool** discovers, identifies, calibrates and updates any SAPPHIFY device on
   the bus or over USB.
 - **One shared frame vocabulary.** Health flags, identity, configuration persistence, time
   synchronisation and firmware update are defined once in sections 2 to 3.4 and are identical on
@@ -43,14 +43,17 @@ which currently defines the AHRS only.
 
 ### 0.1 Naming
 
-**ROTEM is the series name and is never used alone as a product name.** A product is
-`ROTEM <product name>` on first mention and the product name alone thereafter. The series name
-carries the trust; the product name carries the function.
+**The vendor name carries the library; each product keeps a distinct name of its own.** The
+library is `SapphifyLib`; the AHRS is `ROTEM`. This follows REV (`REVLib` + SPARK MAX) and CTRE
+(Phoenix + Pigeon 2) rather than a shared product prefix, for a practical reason: a library named
+after one product reads as broken the moment a differently-named second product ships inside it,
+and renaming a vendordep after teams have installed it forces every one of them to uninstall and
+reinstall.
 
-Two names were considered and rejected on substance rather than taste: anything built on
-"compass" or "north" would advertise magnetic heading as the primary output, and magnetometer
-fusion is **off by default** in the FRC profile. A name that promises what the default
-configuration deliberately does not do is a support cost forever.
+Names built on "compass" or "north" were rejected on substance rather than taste. They would
+advertise magnetic heading as the primary output, and magnetometer fusion is **off by default** in
+the FRC profile. A name promising what the default configuration deliberately refuses to do is a
+support cost forever.
 
 ---
 
@@ -67,26 +70,26 @@ configuration deliberately does not do is a support cost forever.
 ### 1.1 Rule: the manufacturer ID is a named constant
 
 The manufacturer ID is embedded in every arbitration ID on the bus. It is defined **once**, as
-`ROTEM_CAN_MANUFACTURER_ID`, and referenced by firmware, library, tooling, this document and the
+`SAPPHIFY_CAN_MANUFACTURER_ID`, and referenced by firmware, library, tooling, this document and the
 test vectors. It never appears as a literal. When FIRST assigns the production value, one constant
 changes and the whole stack follows.
 
 Until assignment:
 
 ```
-ROTEM_CAN_MANUFACTURER_ID = 8    // "Team Use" — BETA ONLY, must not ship in a release build
+SAPPHIFY_CAN_MANUFACTURER_ID = 8    // "Team Use" — BETA ONLY, must not ship in a release build
 ```
 
 ---
 
 ## 2. Addressing
 
-Every ROTEM device uses the standard FRC CAN arbitration-ID layout (29-bit extended identifier).
+Every SAPPHIFY device uses the standard FRC CAN arbitration-ID layout (29-bit extended identifier).
 
 | Field | Width | ROTEM value |
 |---|---|---|
 | Device Type | 5 bits | per product — see the series table in section 0 |
-| Manufacturer | 8 bits | `ROTEM_CAN_MANUFACTURER_ID` (8 during beta; 21–255 once assigned) — **the same value for the whole series** |
+| Manufacturer | 8 bits | `SAPPHIFY_CAN_MANUFACTURER_ID` (8 during beta; 21–255 once assigned) — **the same value for every device** |
 | API Class | 6 bits | see section 3 |
 | API Index | 4 bits | see section 3 |
 | Device Number | 6 bits | 0–62; **default 0**; 63 reserved |
@@ -98,7 +101,7 @@ request.
 
 Device Number is scoped per Device Type, so an AHRS and an encoder may both be device 0 without
 conflicting. `FLAG_ID_CONFLICT` is therefore evaluated within a Device Type, never across the
-series.
+family.
 
 ### 2.1 Device number and conflicts
 
@@ -148,7 +151,7 @@ API classes 2 (`STATUS_HEALTH`, `STATUS_CALIBRATION`, `STATUS_CAN`, `STATUS_IDEN
 every ROTEM device. Classes 0, 1 and 3 are the measurement frames and are product-specific; the
 tables below define them for the ROTEM AHRS.
 
-### 3.1 Periodic status frames — ROTEM AHRS
+### 3.1 Periodic status frames — ROTEM
 
 | Class | Index | Name | Default rate | Payload |
 |---|---|---|---|---|
@@ -296,9 +299,6 @@ reserves the frame and defines the fields, and the number goes in when the bench
 Honest gaps, to be closed before v1.0:
 
 1. Production manufacturer ID (blocked on FIRST).
-1a. Final product name for the AHRS. The series name and the addressing scheme do not depend on
-    it, which is why this document could be written before the name was settled — but the name
-    must be fixed before the specification is published, because it appears in every example.
 2. Classic-CAN timestamp carriage — see the draft note in 3.2.
 3. Measured time-synchronisation precision.
 4. Black-box download and firmware-update frame formats over CAN (class 48–63). The USB path is
@@ -308,7 +308,8 @@ Honest gaps, to be closed before v1.0:
 
 ## 5. Change log
 
-- **v0.9, 2026-08-18** — first public draft. Restructured as a **series** specification: one
-  manufacturer ID, one series-common frame vocabulary, product-specific measurement frames.
+- **v0.9, 2026-08-18** — first public draft. Written as a **vendor-wide** specification: one
+  manufacturer ID, one common frame vocabulary, product-specific measurement frames. ROTEM is the
+  first device defined under it.
   Addressing, AHRS status frame map, health flags, configuration and persistence contract
   defined. Manufacturer ID pending.
