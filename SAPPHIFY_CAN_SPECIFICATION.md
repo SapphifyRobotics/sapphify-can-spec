@@ -86,7 +86,7 @@ SAPPHIFY_CAN_MANUFACTURER_ID = 8    // "Team Use" — BETA ONLY, must not ship i
 
 Every SAPPHIFY device uses the standard FRC CAN arbitration-ID layout (29-bit extended identifier).
 
-| Field | Width | ROTEM value |
+| Field | Width | SAPPHIFY value |
 |---|---|---|
 | Device Type | 5 bits | per product — see the series table in section 0 |
 | Manufacturer | 8 bits | `SAPPHIFY_CAN_MANUFACTURER_ID` (8 during beta; 21–255 once assigned) — **the same value for every device** |
@@ -148,8 +148,8 @@ API Class 0–15 are periodic status frames, 16–31 are on-demand control, 32�
 
 API classes 2 (`STATUS_HEALTH`, `STATUS_CALIBRATION`, `STATUS_CAN`, `STATUS_IDENTITY`), 16
 (commands) and 32 (configuration) are **series-common**: identical fields, identical semantics on
-every ROTEM device. Classes 0, 1 and 3 are the measurement frames and are product-specific; the
-tables below define them for the ROTEM AHRS.
+every SAPPHIFY device. Classes 0, 1 and 3 are the measurement frames and are product-specific; the
+tables below define them for ROTEM.
 
 ### 3.1 Periodic status frames — ROTEM
 
