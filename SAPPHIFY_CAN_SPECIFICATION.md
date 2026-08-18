@@ -121,6 +121,22 @@ family.
 - On CAN FD, ROTEM packs a full estimator state into a single large frame rather than several
   8-byte frames. This is a deliberate bandwidth choice: the Systemcore CAN interfaces share SPI
   controllers and the practical limit is **frames per second**, not bits per second.
+
+> **Open risk — CAN FD may not be reachable from robot code yet.** As of WPILib 2027 alpha-6 the
+> Java CAN API exposes classic frames only: `org.wpilib.hardware.bus.CAN` has no FD flag, no
+> bitrate-switch control, and `CANReceiveMessage.length` is documented as "the length of the data
+> received (0-8 bytes)". The word "CAN FD" appears in the 2027 documentation exactly once, and
+> only to say the Disable broadcast is never an FD frame.
+>
+> Systemcore hardware unquestionably does FD — its interfaces are configured at 1 Mbps CAN FD and
+> the addressing spec distinguishes FD frames — but a pure-Java vendor library currently has no
+> documented way to send or receive a payload longer than eight bytes.
+>
+> Consequence for this specification: **`STATUS_FD_COMPOSITE` is provisional.** Every other frame
+> is eight bytes or fewer and works today. Before v1.0 this must be re-verified against a WPILib
+> beta or release candidate; if the Java API still has no FD path, the composite frame either
+> waits for one, or the high-rate state is split across classic frames, or it becomes reachable
+> only over USB and through our own bridge. The rest of the protocol does not depend on it.
 - The **broadcast/robot-state heartbeat from the robot controller is always a CAN 2.0 frame,
   never an FD frame**, and is forwarded across Motioncore to all buses. Firmware must accept it in
   classic form regardless of the configured FD mode.
@@ -301,9 +317,11 @@ Honest gaps, to be closed before v1.0:
 1. Production manufacturer ID (blocked on FIRST).
 2. Classic-CAN timestamp carriage — see the draft note in 3.2.
 3. Measured time-synchronisation precision.
-4. Black-box download and firmware-update frame formats over CAN (class 48–63). The USB path is
+4. Whether `STATUS_FD_COMPOSITE` is reachable from robot code at all — see the CAN FD risk note
+   in section 2.2. Blocked on WPILib exposing an FD path in the Java CAN API.
+5. Black-box download and firmware-update frame formats over CAN (class 48–63). The USB path is
    the primary one for both; the CAN path is defined once the USB protocol is stable.
-5. Test vectors: a machine-readable file of encoded frames and their decoded values, published
+6. Test vectors: a machine-readable file of encoded frames and their decoded values, published
    with the specification so any implementer can verify a decoder without hardware.
 
 ## 5. Change log
