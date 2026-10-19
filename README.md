@@ -1,25 +1,9 @@
-# SAPPHIFY CAN protocol
+# SAPPHIFY CAN protocol: moved
 
-The normative CAN protocol specification for every SAPPHIFY FRC device.
+The implemented ROTEM wire **0.6** specification and conformance tests now live in [rotem-software](https://github.com/SapphifyRobotics/rotem-software/tree/main/protocol).
 
-**[Read the specification](SAPPHIFY_CAN_SPECIFICATION.md)** — draft v0.9.
+[Read the current protocol](https://github.com/SapphifyRobotics/rotem-software/blob/main/protocol/wire-0.6.md) · [Developer documentation](https://docs.sapphify.com/rotem/protocol/)
 
-Any team can write its own driver, replay its own logs, or integrate a SAPPHIFY device into a
-non-WPILib stack from this document alone. No SAPPHIFY software is required and no part of it is
-withheld.
+This repository retains **draft 0.9 as historical design only**. It does not describe current first-article firmware and must not be used as its driver contract. Please open implementation issues in rotem-software. Existing specification licensing is unchanged.
 
-The incumbent does not publish an equivalent: there is no frame layout, arbitration-ID reference
-or DBC anywhere in CTRE's documentation. Publishing ours is the difference between a device you
-can only use and a device you can understand.
-
-Devices defined here:
-
-- **ROTEM** — CAN FD attitude and heading reference. Sections 3.1 and 3.2.
-- Sections 2 through 3.4 are common to every device: addressing, health flags, identity,
-  configuration persistence, time synchronisation and firmware update.
-
-The document is versioned with the firmware: a released firmware image always matches a released
-specification version exactly. Anything not yet decided is listed as an open gap in section 4
-rather than left vague.
-
-Licence: CC BY 4.0. Implementations of the protocol are unrestricted.
+The repository remains available while downstream links are migrated; it has not been archived.
